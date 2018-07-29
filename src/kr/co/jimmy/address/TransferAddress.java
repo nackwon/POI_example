@@ -1,3 +1,5 @@
+package kr.co.jimmy.address;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -5,7 +7,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -19,9 +20,41 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 
 public class TransferAddress {
 
-	public ArrayList<theaterVo> readexcel() {
+	public static void write_naver_theater(ArrayList<TheaterVo> list) {
+		String path = "new_theater_list.xls";
+		
+		try {
+			File file = new File(path);
+			FileOutputStream fileout = new FileOutputStream(file);
+
+			HSSFWorkbook hworkbook = new HSSFWorkbook();
+			HSSFSheet sheet = hworkbook.createSheet("TheaterList");
+
+			HSSFRow curRow;
+			int size = 830;
+
+			for (int i = 0; i <= size; i++) {
+				curRow = sheet.createRow(i);
+				curRow.createCell(0).setCellValue(i++);
+				curRow.createCell(1).setCellValue(list.get(i).getTheatername());
+				curRow.createCell(2).setCellValue(list.get(i).getTheateraddress());
+				curRow.createCell(3).setCellValue(list.get(i).getTheaterRoadaddress());
+			}
+			hworkbook.write(fileout);
+			System.out.println("완료");
+			fileout.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public ArrayList<TheaterVo> readexcel() {
 		String path = "./TheaterList.xls"; // 읽을 파일 경로
-		ArrayList<theaterVo> theaterlist = new ArrayList<theaterVo>(); // 데이터를 담을 list
+		ArrayList<TheaterVo> theaterlist = new ArrayList<TheaterVo>(); // 데이터를 담을 list
 
 		try {
 			File file = new File(path);
@@ -42,7 +75,7 @@ public class TransferAddress {
 				int row = curSheet.getPhysicalNumberOfRows();
 				// System.out.println(row); 현재 sheet의 row 갯수 확인
 				for (int i = 1; i < row; i++) {
-					theaterVo vo = new theaterVo();
+					TheaterVo vo = new TheaterVo();
 					curRow = curSheet.getRow(i);
 
 					// vo의 setter를 이용해 담고 있습니다.
@@ -72,18 +105,18 @@ public class TransferAddress {
 		return theaterlist;
 	}
 
-	public void writeexcel(ArrayList<theaterVo> list) {
+	public void writeexcel(ArrayList<TheaterVo> list) {
 
 		String path = "transferTheaterList.xls"; // 저장할 파일 경로
 		try {
 			File file = new File(path);
-			FileOutputStream fileout = new FileOutputStream(file); 
+			FileOutputStream fileout = new FileOutputStream(file);
 
 			HSSFWorkbook hworkbook = new HSSFWorkbook();
 			HSSFSheet sheet = hworkbook.createSheet("theaterList"); // sheet 생성
-			
+
 			HSSFRow curRow;
-			
+
 			int row = list.size(); // list 크기
 			for (int i = 0; i < row; i++) {
 				curRow = sheet.createRow(i); // row 생성
@@ -128,8 +161,8 @@ public class TransferAddress {
 
 	// 좌표변환 naver API
 	public static String transfer(String address) {
-		String clientId = "";
-		String clientSecret = "";
+		String clientId = "85K3LBTERGnPmOpMLKtu";
+		String clientSecret = "iyb1kOidfo";
 		String path = "https://openapi.naver.com/v1/map/geocode?query=";
 		String result = "";
 		try {
@@ -181,11 +214,11 @@ public class TransferAddress {
 
 	public static void main(String[] args) {
 		TransferAddress transfer = new TransferAddress();
-		ArrayList<theaterVo> list = new ArrayList<theaterVo>();
+		ArrayList<TheaterVo> list = new ArrayList<TheaterVo>();
 		list = transfer.readexcel();
-		
+
 		transfer.writeexcel(list);
-		
+
 		int size = list.size();
 		for (int i = 0; i < size; i++) {
 			System.out.println(list.get(i).toString());

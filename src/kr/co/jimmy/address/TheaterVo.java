@@ -1,5 +1,6 @@
+package kr.co.jimmy.address;
 
-public class theaterVo {
+public class TheaterVo {
 
 	private int theaterno;
 	private int brandno;
@@ -7,6 +8,15 @@ public class theaterVo {
 	private String theateraddress;
 	private String theaterxgps;
 	private String theaterygps;
+	private String theaterRoadaddress;
+
+	public String getTheaterRoadaddress() {
+		return theaterRoadaddress;
+	}
+
+	public void setTheaterRoadaddress(String theaterRoadaddress) {
+		this.theaterRoadaddress = theaterRoadaddress;
+	}
 
 	public int getBrandno() {
 		return brandno;
