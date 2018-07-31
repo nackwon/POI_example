@@ -12,11 +12,18 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.StringJoiner;
+
+import javax.swing.text.html.HTMLEditorKit.Parser;
 
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 public class TransferAddress {
 
@@ -31,11 +38,11 @@ public class TransferAddress {
 			HSSFSheet sheet = hworkbook.createSheet("TheaterList");
 
 			HSSFRow curRow;
-			int size = 830;
-
-			for (int i = 0; i <= size; i++) {
+			int size = list.size();
+			int j = 0;
+			for (int i = 0; i < size; i++) {
 				curRow = sheet.createRow(i);
-				curRow.createCell(0).setCellValue(i++);
+				curRow.createCell(0).setCellValue(++j);
 				curRow.createCell(1).setCellValue(list.get(i).getTheatername());
 				curRow.createCell(2).setCellValue(list.get(i).getTheateraddress());
 				curRow.createCell(3).setCellValue(list.get(i).getTheaterRoadaddress());
@@ -53,7 +60,7 @@ public class TransferAddress {
 	}
 
 	public ArrayList<TheaterVo> readexcel() {
-		String path = "./TheaterList.xls"; // 읽을 파일 경로
+		String path = "./new_theater_list.xls"; // 읽을 파일 경로
 		ArrayList<TheaterVo> theaterlist = new ArrayList<TheaterVo>(); // 데이터를 담을 list
 
 		try {
@@ -74,21 +81,27 @@ public class TransferAddress {
 				curSheet = hworkbook.getSheetAt(sheetNumber);
 				int row = curSheet.getPhysicalNumberOfRows();
 				// System.out.println(row); 현재 sheet의 row 갯수 확인
-				for (int i = 1; i < row; i++) {
+				for (int i = 0; i < row; i++) {
 					TheaterVo vo = new TheaterVo();
 					curRow = curSheet.getRow(i);
-
+					
 					// vo의 setter를 이용해 담고 있습니다.
 					// 여기서는 그대로 담는 것이 아니라 자료형에 맞춰서 형변환을 해주셔야 합니다.
-					vo.setTheaterno(Integer.valueOf(String.valueOf(curRow.getCell(2))));
-					vo.setTheatername(String.valueOf(curRow.getCell(3)));
-					vo.setTheateraddress(String.valueOf(curRow.getCell(18)));
+					double theaterno = Double.valueOf(String.valueOf(curRow.getCell(0)));
+					vo.setTheaterno((int)theaterno);
+					vo.setTheatername(String.valueOf(curRow.getCell(1)));
+					vo.setTheateraddress(String.valueOf(curRow.getCell(3)));
 					// 아래의 brandno는 필요한 부분이라 따로 제가 만든 메소드 이기 떄문에 아래 2줄은 빼셔도 됩니다.
-					int brandno = TransferAddress.brandno(String.valueOf(curRow.getCell(14)));
+					int brandno = TransferAddress.brandno(String.valueOf(curRow.getCell(1)));
 					vo.setBrandno(brandno);
-					String address = TransferAddress.transfer(String.valueOf(curRow.getCell(18)));
-					vo.setTheaterxgps(address.split(",")[0].trim());
-					vo.setTheaterygps(address.split(",")[1].trim());
+					String address = TransferAddress.transfer(String.valueOf(curRow.getCell(2)));
+					vo.setTheaterRoadaddress(String.valueOf(curRow.getCell(3)));
+					if( address == "error") {
+						address = TransferAddress.transfer(String.valueOf(curRow.getCell(3)));
+					}
+					System.out.println(theaterno+":"+address);
+					vo.setTheaterxgps(address.split(":")[0].trim());
+					vo.setTheaterygps(address.split(":")[1].trim());
 
 					theaterlist.add(vo);
 				}
@@ -149,7 +162,7 @@ public class TransferAddress {
 			return result;
 		} else if (brandname.contains("메가박스")) {
 			result = 1;
-		} else if (brandname.contains("CJ")) {
+		} else if (brandname.contains("CGV")) {
 			result = 2;
 		} else if (brandname.contains("롯데시네마")) {
 			result = 3;
@@ -189,22 +202,30 @@ public class TransferAddress {
 			while ((inputLine = br.readLine()) != null) {
 				response.append(inputLine);
 			}
-			if (response != null) {
-				if (response.indexOf("items") > -1) {
-					lon = response.substring(response.indexOf("\"x\"") + 4, response.indexOf("\"x\"") + 16).trim();
-					lat = response.substring(response.indexOf("\"y\"") + 4, response.indexOf("\"y\"") + 16).trim();
-				}
+			JSONParser parser = new JSONParser();
+			JSONObject jsonobj = (JSONObject) parser.parse(response.toString());
+			if(jsonobj == null)
+				return "error";
+			JSONObject tmp = (JSONObject)jsonobj.get("result");
+			if(tmp == null) 
+				return "error";
+			JSONArray array = (JSONArray) tmp.get("items");
+			for(int i=0;i<array.size();i++) {
+				JSONObject result1 = (JSONObject) array.get(i);
+				JSONObject point = (JSONObject) result1.get("point");
+				double x = (double)point.get("x");
+				double y = (double)point.get("y");
+				
+				result = x +":"+y;
 			}
 			br.close();
-
-			result = lon + "," + lat;
-			if (result.length() == 1) {
-				result = "100,100";
-			}
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
