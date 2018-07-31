@@ -7,12 +7,12 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 import kr.co.jimmy.address.TheaterVo;
 import kr.co.jimmy.address.TransferAddress;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 
 public class Search_Region {
 
@@ -56,14 +56,17 @@ public class Search_Region {
 			JSONObject jsonobj = (JSONObject) parser.parse(result);
 			System.out.println(jsonobj.toString());
 			JSONArray jsonarray = (JSONArray) jsonobj.get("items");
-
+			
 			for (int i = 0; i < jsonarray.size(); i++) {
 				TheaterVo vo = new TheaterVo();
 				JSONObject result1 = (JSONObject) jsonarray.get(i);
-				vo.setTheatername((String) result1.get("title"));
-				vo.setTheateraddress((String) result1.get("address"));
-				vo.setTheaterRoadaddress((String)result1.get("roadAddress"));
-				list.add(vo);
+				String title = (String) result1.get("title");
+				if(title.contains("메가박스") || title.contains("CGV") || title.contains("롯데")) {
+					vo.setTheatername((String) result1.get("title"));
+					vo.setTheateraddress((String) result1.get("address"));
+					vo.setTheaterRoadaddress((String)result1.get("roadAddress"));
+					list.add(vo);
+				}
 			}
 
 		} catch (Exception e) {
@@ -79,6 +82,7 @@ public class Search_Region {
 			list = search_Region("영화관",i);
 			resultlist.addAll(list);
 		}
+		System.out.println(resultlist.size());
 		TransferAddress.write_naver_theater(resultlist);
 	}
 }
